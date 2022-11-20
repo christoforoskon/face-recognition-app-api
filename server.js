@@ -1,6 +1,22 @@
 const express = require("express");
 const bcrypt = require("bcrypt-nodejs");
 const cors = require("cors");
+const knex = require("knex");
+
+const db = knex({
+    client: "pg",
+    connection: {
+        host: "127.0.0.1",
+        port: 5432,
+        user: "postgres",
+        password: "admin",
+        database: "face-recognition",
+    },
+});
+
+db.select("*").from("users").then(data => {
+    console.log(data);
+});
 
 const app = express();
 
@@ -9,27 +25,27 @@ app.use(cors());
 
 const database = {
     users: [{
-            id: "123",
-            name: "John",
-            email: "john@gmail.com",
-            password: "cookies",
-            entries: 0,
-            joined: new Date(),
-        },
-        {
-            id: "124",
-            name: "Sally",
-            email: "sally@gmail.com",
-            password: "bananas",
-            entries: 0,
-            joined: new Date(),
-        },
+        id: "123",
+        name: "John",
+        email: "john@gmail.com",
+        password: "cookies",
+        entries: 0,
+        joined: new Date(),
+    },
+    {
+        id: "124",
+        name: "Sally",
+        email: "sally@gmail.com",
+        password: "bananas",
+        entries: 0,
+        joined: new Date(),
+    },
     ],
     login: [{
         id: "987",
         hash: "",
         email: "john@gmail.com",
-    }, ],
+    },],
 };
 
 app.get("/", (req, res) => {
@@ -40,7 +56,7 @@ app.post("/signin", (req, res) => {
     bcrypt.compare(
         "apples",
         "$2a$10$Ie7FfpcV4a6RHw5LlxL5g.KxnqIVR9BPL8PbxjKIdNRWMKfDbMG6S",
-        function(err, res) {
+        function (err, res) {
             // res == true
             console.log("first guess", res);
         }
@@ -48,7 +64,7 @@ app.post("/signin", (req, res) => {
     bcrypt.compare(
         "veggies",
         "$2a$10$Ie7FfpcV4a6RHw5LlxL5g.KxnqIVR9BPL8PbxjKIdNRWMKfDbMG6S",
-        function(err, res) {
+        function (err, res) {
             // res == true
             console.log("second guess", res);
         }
@@ -69,13 +85,20 @@ app.post("/register", (req, res) => {
     //     // Store hash in your password DB.
     //     console.log(hash);
     // });
-    database.users.push({
-        id: "125",
-        name: name,
+
+    db('users').insert({
         email: email,
-        entries: 0,
-        joined: new Date(),
-    });
+        name: name,
+        joined: new Date()
+    }).then(console.log)
+
+    // database.users.push({
+    //     id: "125",
+    //     name: name,
+    //     email: email,
+    //     entries: 0,
+    //     joined: new Date(),
+    // });
     res.json(database.users[database.users.length - 1]);
 });
 
