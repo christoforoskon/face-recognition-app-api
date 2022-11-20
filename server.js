@@ -86,11 +86,18 @@ app.post("/register", (req, res) => {
     //     console.log(hash);
     // });
 
-    db('users').insert({
-        email: email,
-        name: name,
-        joined: new Date()
-    }).then(console.log)
+    db('users')
+        .returning('*')
+        .insert({
+            email: email,
+            name: name,
+            joined: new Date()
+        }).then(user => {
+            res.json(user[0]);
+        })
+        .catch(err => {
+            res.status(400).json('Unable to register')
+        })
 
     // database.users.push({
     //     id: "125",
@@ -99,36 +106,55 @@ app.post("/register", (req, res) => {
     //     entries: 0,
     //     joined: new Date(),
     // });
-    res.json(database.users[database.users.length - 1]);
+    // res.json(database.users[database.users.length - 1]);
 });
 
 app.get("/profile/:id", (req, res) => {
     const { id } = req.params;
-    let found = false;
-    database.users.forEach((user) => {
-        if (user.id === id) {
-            found = true;
-            return res.json(user);
+    // let found = false;
+    db.select('*').from('users').where({ id }).then(user => {
+        // console.log(user[0]);
+        if (user.length) {
+            res.json(user[0]);
+        } else {
+            res.status(400).json('Error getting the user');
         }
-    });
-    if (!found) {
-        res.status(404).json("Not found!");
-    }
+    })
+        .catch(err => res.status(400).json('Not Found!'))
+    // database.users.forEach((user) => {
+    //     if (user.id === id) {
+    //         found = true;
+    //         return res.json(user);
+    //     }
+    // });
+    // if (!found) {
+    //     res.status(404).json("Not found!");
+    // }
 });
 
 app.put("/image", (req, res) => {
     const { id } = req.body;
-    let found = false;
-    database.users.forEach((user) => {
-        if (user.id === id) {
-            found = true;
-            user.entries++;
-            return res.json(user.entries);
-        }
-    });
-    if (!found) {
-        res.status(404).json("Not found!");
-    }
+
+    db('users')
+        .where('id', '=', id)
+        .increment('entries', 1)
+        .returning('entries')
+        .then(entries => {
+            res.json(entries[0].entries);
+        })
+        .catch(err => res.status(400).json('Unable to get count.'))
+
+    // let found = false;
+    // database.users.forEach((user) => {
+    //     if (user.id === id) {
+    //         found = true;
+    //         user.entries++;
+    //         return res.json(user.entries);
+    //     }
+    // });
+    // if (!found) {
+    //     res.status(404).json("Not found!");
+    // }
 });
 
 // Load hash from your password DB.
